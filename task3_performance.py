@@ -9,7 +9,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def run_openssl_speed(algorithm, seconds=3):
+def run_openssl_speed(algorithm, seconds=1):
     cmd = f"openssl speed -seconds {seconds} {algorithm}"
     print(f"Running: {cmd}")
     result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=120)
