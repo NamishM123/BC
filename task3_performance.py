@@ -50,13 +50,47 @@ def parse_aes_results(output):
 def parse_rsa_results(output):
     """Parse RSA sign/verify throughput results from openssl speed output."""
     results = {}
+    sign_counts = {}
+    verify_counts = {}
+
     for line in output.split('\n'):
+        # Format 1: "rsa  2048 bits 0.000640s 0.000018s   1561.3  54307.7"
         match = re.match(r'\s*rsa\s+(\d+)\s+bits\s+([\d.]+)s\s+([\d.]+)s\s+([\d.]+)\s+([\d.]+)', line)
         if match:
             bits = int(match.group(1))
             results[bits] = {
                 'sign_per_sec': float(match.group(4)),
                 'verify_per_sec': float(match.group(5)),
+            }
+            continue
+
+        # Format 2 (macOS): "Doing rsa4096 signs ops for 1s: 214 rsa4096 signature sign ops in 1.00s"
+        match = re.search(r'Doing rsa(\d+) sign\w* ops for \d+s: (\d+) .* in ([\d.]+)s', line)
+        if match:
+            bits = int(match.group(1))
+            count = int(match.group(2))
+            time = float(match.group(3))
+            if bits not in sign_counts:
+                sign_counts[bits] = {'count': 0, 'time': 0}
+            sign_counts[bits] = {'count': count, 'time': time}
+            continue
+
+        match = re.search(r'Doing rsa(\d+) verify ops for \d+s: (\d+) .* in ([\d.]+)s', line)
+        if match:
+            bits = int(match.group(1))
+            count = int(match.group(2))
+            time = float(match.group(3))
+            if bits not in verify_counts:
+                verify_counts[bits] = {'count': 0, 'time': 0}
+            verify_counts[bits] = {'count': count, 'time': time}
+
+    for bits in set(list(sign_counts.keys()) + list(verify_counts.keys())):
+        if bits not in results:
+            s = sign_counts.get(bits, {'count': 0, 'time': 1})
+            v = verify_counts.get(bits, {'count': 0, 'time': 1})
+            results[bits] = {
+                'sign_per_sec': s['count'] / s['time'] if s['time'] > 0 else 0,
+                'verify_per_sec': v['count'] / v['time'] if v['time'] > 0 else 0,
             }
     return results
 
