@@ -12,8 +12,21 @@ import matplotlib.pyplot as plt
 def run_openssl_speed(algorithm, seconds=1):
     cmd = f"openssl speed -seconds {seconds} {algorithm}"
     print(f"Running: {cmd}")
-    result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=120)
+    result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=300)
     return result.stdout + result.stderr
+
+
+def run_openssl_speed_rsa(seconds=1):
+    """Run RSA benchmarks one key size at a time to avoid long waits."""
+    all_output = ""
+    for bits in [512, 1024, 2048, 4096]:
+        cmd = f"openssl speed -seconds {seconds} rsa{bits}"
+        print(f"Running: {cmd}")
+        result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=60)
+        output = result.stdout + result.stderr
+        all_output += output + "\n"
+        print(f"  Done with RSA-{bits}")
+    return all_output
 
 
 def parse_aes_results(output):
@@ -102,7 +115,7 @@ if __name__ == '__main__':
     print(aes_output)
 
     print("\n--- RSA Benchmark ---")
-    rsa_output = run_openssl_speed("rsa")
+    rsa_output = run_openssl_speed_rsa(seconds=1)
     print(rsa_output)
 
     aes_results = parse_aes_results(aes_output)
