@@ -1,14 +1,7 @@
-"""Create a sample BMP image with repeating patterns to demonstrate ECB vs CBC."""
+"""Convert mustang.jpg to BMP format for encryption."""
 from PIL import Image
 
-img = Image.new('RGB', (200, 200))
-pixels = img.load()
-for y in range(200):
-    for x in range(200):
-        if (x // 20 + y // 20) % 2 == 0:
-            pixels[x, y] = (255, 255, 255)
-        else:
-            pixels[x, y] = (0, 0, 128)
-
-img.save('sample.bmp', 'BMP')
-print("Created sample.bmp")
+img = Image.open('mustang.jpg')
+img = img.convert('RGB')
+img.save('mustang.bmp', 'BMP')
+print(f"Created mustang.bmp ({img.size[0]}x{img.size[1]})")
